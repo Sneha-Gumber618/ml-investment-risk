@@ -28,7 +28,7 @@ def main():
     # Train mutual fund model
     print("\n2. Training Mutual Fund Model...")
     try:
-        mf_model, mf_accuracy, mf_feature_importance = train_mf_model('data/mutual_fund_nav_history.parquet')
+        mf_model, mf_accuracy, mf_feature_importance = train_mf_model('data/mutual_fund_optimal.parquet')
         print(f"Mutual fund model trained successfully! Accuracy: {mf_accuracy:.4f}")
     except Exception as e:
         print(f"Error training mutual fund model: {e}")

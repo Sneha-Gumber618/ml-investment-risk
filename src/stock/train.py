@@ -18,17 +18,17 @@ from src.stock.preprocess import preprocess_stock_data, create_features
 
 def assign_stock_risk(vol):
     """
-    Assign risk level based on volatility (RELAXED thresholds for small datasets).
+    Assign risk level based on volatility (FIXED thresholds for better balance).
 
     Args:
-        vol (float): Volatility value (should be in 0.02-0.08 range for daily data)
+        vol (float): Volatility value
 
     Returns:
         str: 'Low', 'Medium', or 'High'
     """
-    if vol < 0.015:
+    if vol < 0.012:
         return 'Low'
-    elif vol < 0.025:
+    elif vol < 0.020:
         return 'Medium'
     else:
         return 'High'
@@ -126,6 +126,7 @@ def train_stock_model(data_path):
         n_estimators=100,
         max_depth=5,        # Limit depth to prevent overfitting
         min_samples_leaf=5, # Regularisation
+        class_weight='balanced',   # Force attention to minority High class
         random_state=42,
     )
     model.fit(X_train, y_train)

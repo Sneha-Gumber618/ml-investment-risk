@@ -17,7 +17,7 @@ from src.mutual_fund.preprocess import preprocess_mf_data, create_features
 
 def assign_mf_risk(vol):
     """
-    Assign risk level based on volatility (RELAXED thresholds for mutual fund data).
+    Assign risk level based on volatility (FIXED thresholds for balanced distribution).
 
     Args:
         vol (float): Volatility value
@@ -25,9 +25,9 @@ def assign_mf_risk(vol):
     Returns:
         str: 'Low', 'Medium', or 'High'
     """
-    if vol < 0.02:
+    if vol < 0.030:
         return 'Low'
-    elif vol < 0.05:
+    elif vol < 0.048:
         return 'Medium'
     else:
         return 'High'

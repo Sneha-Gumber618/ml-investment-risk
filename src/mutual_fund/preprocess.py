@@ -45,6 +45,7 @@ def preprocess_mf_data(file_path):
 def create_features(df):
     """
     Create features from cleaned mutual fund data using shared rolling feature builder.
+    Apply rolling features per fund separately — prevents boundary bleeding.
 
     Args:
         df (pd.DataFrame): Cleaned mutual fund dataframe
@@ -52,15 +53,20 @@ def create_features(df):
     Returns:
         pd.DataFrame: Dataframe with engineered features
     """
-    df = add_rolling_features(df, price_col='NAV', window=20)
-
-    # MF-specific: NAV daily change (as decimal)
-    df['nav_change'] = df['NAV'].pct_change()
-
-    # Remove outliers — clean data is already handled; just drop any extreme outliers
-    df = df[df['returns'].abs() < 0.1]
-
-    df = df.dropna()
+    # Apply rolling features per fund separately — prevents boundary bleeding
+    if 'Scheme_Code' in df.columns:
+        groups = []
+        for _, group in df.groupby('Scheme_Code'):
+            group = add_rolling_features(group, price_col='NAV', window=20)
+            group['nav_change'] = group['NAV'].pct_change()
+            group = group[group['returns'].abs() < 0.1]
+            group = group.dropna()
+            groups.append(group)
+        df = pd.concat(groups).reset_index(drop=True)
+    else:
+        df = add_rolling_features(df, price_col='NAV', window=20)
+        df['nav_change'] = df['NAV'].pct_change()
+        df = df.dropna()
 
     print(f"Features created: {len(df)} rows")
     print(f"Feature columns: {['returns', 'volatility', 'nav_change', 'nav_ratio', 'momentum_5d', 'nav_range_ratio']}")
