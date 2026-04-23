@@ -1,67 +1,68 @@
-# Stock Data Preprocessing
-# This module will handle data cleaning and preprocessing for stock data
-
+"""
+Stock data preprocessing — cleans CSV and builds features using shared utilities.
+"""
 import pandas as pd
 import numpy as np
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from src.shared.base_preprocess import add_rolling_features
+
 
 def preprocess_stock_data(file_path):
     """
-    Preprocess stock data from CSV file
-    
+    Preprocess stock data from a CSV file.
+
     Args:
-        file_path (str): Path to the stock data CSV file
-        
+        file_path (str): Path to the stock CSV file (e.g. data/RELIANCE.csv)
+
     Returns:
-        pd.DataFrame: Preprocessed stock data
+        pd.DataFrame: Cleaned stock dataframe
     """
-    # Load data
     df = pd.read_csv(file_path)
-    
-    # Convert Date column to datetime
+
+    # Parse and sort by date
     df['Date'] = pd.to_datetime(df['Date'])
-    
-    # Sort by date
     df = df.sort_values('Date')
-    
-    # Handle missing values - forward fill
+
+    # Forward-fill missing values for OHLCV columns
     numeric_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
     df[numeric_columns] = df[numeric_columns].ffill()
-    
-    # Remove any remaining NaN rows
+
+    # Drop any remaining NaN rows
     df = df.dropna()
-    
+
+    print(f"Stock data loaded: {len(df)} rows")
+    print(f"Columns: {df.columns.tolist()}")
+
     return df
+
 
 def create_features(df):
     """
-    Create features from stock data
-    
+    Create features from cleaned stock data using the shared rolling feature builder.
+
     Args:
-        df (pd.DataFrame): Raw stock data
-        
+        df (pd.DataFrame): Cleaned stock dataframe
+
     Returns:
-        pd.DataFrame: Data with engineered features
+        pd.DataFrame: Dataframe with engineered features
     """
-    # Calculate daily returns (as decimal, not percentage)
-    df['returns'] = df['Close'].pct_change()
-    
-    # Calculate price change percentage (as decimal)
+    df = add_rolling_features(df, price_col='Close', window=20)
+
+    # Stock-specific extra features
     df['price_change'] = (df['Close'] - df['Open']) / df['Open']
-    
-    # Calculate rolling volatility (20-day window) - should be small values
-    df['volatility'] = df['returns'].rolling(window=20).std()
-    
-    # Calculate volume features
-    df['volume_ma'] = df['Volume'].rolling(window=20).mean()
-    df['volume_ratio'] = df['Volume'] / df['volume_ma']
-    
-    # Calculate price momentum (5-day return)
-    df['momentum_5d'] = df['Close'].pct_change(5)
-    
-    # Calculate high-low spread (as decimal)
-    df['spread'] = (df['High'] - df['Low']) / df['Low']
-    
-    # Remove NaN values created by rolling calculations
+
+    if 'Volume' in df.columns:
+        volume_ma = df['Volume'].rolling(20).mean()
+        df['volume_ratio'] = df['Volume'] / volume_ma
+
+    df['spread'] = (df['High'] - df['Low']) / df['Close']
+
     df = df.dropna()
-    
+
+    print(f"Features created: {len(df)} rows")
+    print(f"Feature columns: {['returns', 'volatility', 'nav_change', 'price_change', 'volume_ratio', 'momentum_5d', 'spread']}")
+
     return df

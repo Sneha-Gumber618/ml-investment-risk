@@ -13,7 +13,7 @@ from stock.train import train_stock_model
 from stock.predict import load_model as load_stock_model, predict_stock_risk, calculate_expected_return as calculate_stock_return
 from mutual_fund.train import train_mf_model
 from mutual_fund.predict import load_model as load_mf_model, predict_mf_risk, calculate_expected_return as calculate_mf_return
-from fd.fd_calculator import analyze_fd_investment
+from src.fd_calculator import analyze_fd_investment
 from stock.preprocess import preprocess_stock_data, create_features as create_stock_features
 from mutual_fund.preprocess import preprocess_mf_data, create_features as create_mf_features
 

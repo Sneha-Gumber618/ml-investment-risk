@@ -1,42 +1,64 @@
-# Investment Analysis App
+# heyyy — Investment Analyzer
 
-A simple Python-based investment analysis application using Machine Learning and Streamlit.
+Analyzes risk and expected returns for Stocks, Mutual Funds, and Fixed Deposits using ML.
 
 ## Project Structure
 
 ```
-project/
-|
-|-- data/
-|   |-- stock_data.csv          # Stock market data (to be added)
-|   |-- mutual_fund_data.csv    # Mutual fund data (to be added)
-|
-|-- models/
-|   |-- stock_model.pkl         # Trained stock model
-
-The app uses Random Forest classifiers to predict risk levels (Low/Medium/High) and provides expected returns based on historical data patterns.
-
-## 📁 Project Structure
-
-2. Enter investment amount and time period
-3. Click "Analyze" button
-4. View results:
-   - Risk level (Low/Medium/High)
-   - Expected return amount
-   - Simple explanation
-
-## Output Example
-
+heyyy/
+├── app/
+│   └── streamlit_app.py          ← Streamlit UI
+├── data/
+│   ├── mutual_fund_nav_history.parquet
+│   └── RELIANCE.csv
+├── models/                        ← auto-created by train_models.py
+│   ├── mf_model.pkl
+│   └── stock_model.pkl
+├── src/
+│   ├── shared/                    ← shared utilities (no duplication)
+│   │   ├── __init__.py
+│   │   ├── base_predict.py        ← load_model, calculate_expected_return, generate_explanation
+│   │   └── base_preprocess.py     ← add_rolling_features
+│   ├── stock/
+│   │   ├── predict.py             ← stock-specific prediction
+│   │   ├── preprocess.py          ← stock CSV cleaning + feature engineering
+│   │   └── train.py               ← stock model training
+│   ├── mutual_fund/
+│   │   ├── predict.py             ← MF-specific prediction
+│   │   ├── preprocess.py          ← MF Parquet cleaning + feature engineering
+│   │   └── train.py               ← MF model training
+│   ├── fd_calculator.py           ← FD math (no ML needed, no subfolder)
+│   └── pipeline/
+│       └── main_pipeline.py       ← orchestrates everything
+├── train_models.py                ← run this first
+├── requirements.txt
+└── README.md
 ```
-Risk Level: High
-Expected Return: $15,000
-Explanation: High risk due to high volatility
+
+## Files to DELETE from your old project
+
+- `simple_app.py` (root) — old duplicate of `app/streamlit_app.py`
+- `src/fd/` folder and everything in it — replaced by `src/fd_calculator.py`
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+
+# Train models (run once)
+python train_models.py
+
+# Start the app
+streamlit run app/streamlit_app.py
 ```
 
-## Notes
+## What was fixed
 
-- Code kept simple for educational purposes
-- No deep learning or complex patterns
-- Basic Python, pandas, scikit-learn only
-- Comments added for explanation
-- Models trained to avoid always predicting same risk level
+| Problem | Old code | Fixed |
+|---|---|---|
+| `load_model()` duplicated | stock/predict.py + mf/predict.py | `src/shared/base_predict.py` |
+| `generate_explanation()` duplicated | both predict.py files | `src/shared/base_predict.py` |
+| `calculate_expected_return()` duplicated | both predict.py files | shared, rates passed as param |
+| Rolling feature code duplicated | both preprocess.py files | `src/shared/base_preprocess.py` |
+| `src/fd/` folder for 1 file | `src/fd/fd_calculator.py` | `src/fd_calculator.py` |
+| `simple_app.py` stale duplicate | root level | deleted |
