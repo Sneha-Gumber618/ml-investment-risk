@@ -6,12 +6,14 @@ import numpy as np
 import pickle
 import sys
 import os
+from pathlib import Path
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+sys.path.insert(0, str(PROJECT_ROOT))
 from src.mutual_fund.preprocess import preprocess_mf_data, create_features
 
 
@@ -43,15 +45,10 @@ def create_risk_labels(df):
     Returns:
         pd.Series: Risk labels ('Low', 'Medium', 'High')
     """
-    # Use volatility as labelling signal only — clean no-leakage approach
     volatility = df['volatility'].copy()
-
-    # Handle any NaN or Inf values
     volatility = volatility.replace([np.inf, -np.inf], np.nan).fillna(0)
-
     risk_labels = volatility.apply(assign_mf_risk)
 
-    # Check distribution
     print("Label Distribution:")
     print(risk_labels.value_counts())
     label_counts = risk_labels.value_counts()
@@ -65,11 +62,13 @@ def create_risk_labels(df):
 def save_model(model, model_path):
     """
     Save a trained model to a .pkl file.
+    Creates parent directory if it doesn't exist.
 
     Args:
         model: Trained sklearn model
         model_path (str): Path to save the model
     """
+    Path(model_path).parent.mkdir(parents=True, exist_ok=True)
     with open(model_path, 'wb') as f:
         pickle.dump(model, f)
     print(f"Model saved to {model_path}")
@@ -139,7 +138,8 @@ def train_mf_model(data_path):
     for feat, imp in sorted(feature_importance.items(), key=lambda x: -x[1]):
         print(f"  {feat}: {imp:.4f}")
 
-    # Save model
-    save_model(model, 'models/mf_model.pkl')
+    # Save model using absolute path relative to project root
+    model_path = str(PROJECT_ROOT / 'models' / 'mf_model.pkl')
+    save_model(model, model_path)
 
     return model, accuracy, feature_importance

@@ -4,16 +4,18 @@ All shared utilities (load_model, generate_explanation, calculate_expected_retur
 come from src/shared/base_predict.py.
 """
 import numpy as np
+import pandas as pd
 import sys
-import os
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+sys.path.insert(0, str(PROJECT_ROOT))
 from src.shared.base_predict import load_model, calculate_expected_return, generate_explanation
 
 # Mutual fund rates — slightly lower than stocks (less volatile)
 MF_RATES = {'Low': 0.06, 'Medium': 0.12, 'High': 0.20}
 
-# Features the mutual fund model was trained on (FIXED — no volatility leakage)
+# Features the mutual fund model was trained on (no volatility — prevents leakage)
 FEATURE_COLUMNS = ['returns', 'nav_change', 'nav_ratio', 'momentum_5d', 'nav_range_ratio']
 
 
@@ -28,7 +30,7 @@ def predict_mf_risk(model, features):
     Returns:
         dict: risk_level, confidence, explanation
     """
-    feature_array = np.array([[features[col] for col in FEATURE_COLUMNS]])
+    feature_array = pd.DataFrame([[features[col] for col in FEATURE_COLUMNS]], columns=FEATURE_COLUMNS)
 
     risk_level = model.predict(feature_array)[0]
     probabilities = model.predict_proba(feature_array)[0]
@@ -42,7 +44,7 @@ def predict_mf_risk(model, features):
     }
 
 
-def calculate_mf_return(risk_level, amount, time_period):
+def calculate_expected_return(risk_level, amount, time_period):
     """
     Calculate expected return for a mutual fund investment using MF-specific rates.
 
@@ -54,4 +56,5 @@ def calculate_mf_return(risk_level, amount, time_period):
     Returns:
         float: Expected return amount
     """
-    return calculate_expected_return(risk_level, amount, time_period, rates=MF_RATES)
+    from src.shared.base_predict import calculate_expected_return as _calc
+    return _calc(risk_level, amount, time_period, rates=MF_RATES)

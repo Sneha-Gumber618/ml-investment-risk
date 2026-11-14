@@ -4,9 +4,10 @@ Stock data preprocessing — cleans CSV and builds features using shared utiliti
 import pandas as pd
 import numpy as np
 import sys
-import os
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+sys.path.insert(0, str(PROJECT_ROOT))
 from src.shared.base_preprocess import add_rolling_features
 
 
@@ -24,7 +25,7 @@ def preprocess_stock_data(file_path):
 
     # Parse and sort by date
     df['Date'] = pd.to_datetime(df['Date'])
-    df = df.sort_values('Date')
+    df = df.sort_values('Date').reset_index(drop=True)
 
     # Forward-fill missing values for OHLCV columns
     numeric_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
@@ -63,6 +64,6 @@ def create_features(df):
     df = df.dropna()
 
     print(f"Features created: {len(df)} rows")
-    print(f"Feature columns: {['returns', 'volatility', 'nav_change', 'price_change', 'volume_ratio', 'momentum_5d', 'spread']}")
+    print(f"Feature columns: {['returns', 'volatility', 'price_change', 'volume_ratio', 'momentum_5d', 'spread']}")
 
     return df

@@ -73,5 +73,5 @@ def analyze_fd_investment(amount, time_period):
     rate = get_fd_rate(time_period)
     result = calculate_fd_return(amount, rate, time_period)
     result['risk_level'] = get_fd_risk_level()
-    result['explanation'] = "Low risk — guaranteed returns with fixed deposit"
+    result['explanation'] = "Low risk - guaranteed returns with fixed deposit"
     return result

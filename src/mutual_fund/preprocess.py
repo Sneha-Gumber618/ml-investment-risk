@@ -4,9 +4,10 @@ Mutual fund data preprocessing — cleans Parquet data and builds features using
 import pandas as pd
 import numpy as np
 import sys
-import os
+from pathlib import Path
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
+sys.path.insert(0, str(PROJECT_ROOT))
 from src.shared.base_preprocess import add_rolling_features
 
 
@@ -28,7 +29,7 @@ def preprocess_mf_data(file_path):
 
     # Parse and sort by date
     df['Date'] = pd.to_datetime(df['Date'])
-    df = df.sort_values('Date')
+    df = df.sort_values('Date').reset_index(drop=True)
 
     # Forward-fill missing NAV values
     df['NAV'] = df['NAV'].ffill()
@@ -53,12 +54,13 @@ def create_features(df):
     Returns:
         pd.DataFrame: Dataframe with engineered features
     """
-    # Apply rolling features per fund separately — prevents boundary bleeding
     if 'Scheme_Code' in df.columns:
         groups = []
         for _, group in df.groupby('Scheme_Code'):
+            group = group.copy()
             group = add_rolling_features(group, price_col='NAV', window=20)
             group['nav_change'] = group['NAV'].pct_change()
+            # Remove extreme return outliers
             group = group[group['returns'].abs() < 0.1]
             group = group.dropna()
             groups.append(group)
